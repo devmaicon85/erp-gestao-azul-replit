@@ -10,7 +10,7 @@ import {
 import { z } from "zod";
 
 // Helper to validate req.params.id and req.user.organizationId for route handlers
-function withOrgValidation(handler: (req: Request, res: Response, id: string, organizationId: string) => Promise<void>) {
+function withOrgValidation(handler: (req: Request, res: Response, id: string, organizationId: string) => Promise<any>) {
   return async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) {
       return res.status(401).send("Unauthorized");
