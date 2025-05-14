@@ -49,14 +49,19 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy({
-      usernameField: 'email', // Especificar que o campo 'username' na requisição deve ser tratado como 'email'
+      usernameField: 'email', // Especificar que o campo 'email' na requisição deve ser usado para login
       passwordField: 'password'
     }, async (email, password, done) => {
-      const user = await storage.getUserByEmail(email);
-      if (!user || !(await comparePasswords(password, user.password))) {
-        return done(null, false);
-      } else {
-        return done(null, user);
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: 'Credenciais inválidas' });
+        } else {
+          return done(null, user);
+        }
+      } catch (error) {
+        console.error('Erro na autenticação:', error);
+        return done(error);
       }
     }),
   );
@@ -68,35 +73,43 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
-    const existingUser = await storage.getUserByEmail(req.body.email);
-    if (existingUser) {
-      return res.status(400).send("Email already registered");
-    }
+    try {
+      // Verificar se o email já existe
+      const existingUser = await storage.getUserByEmail(req.body.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email já cadastrado" });
+      }
 
-    // Garantir que temos o ID da organização (pode vir da UI ou criamos uma nova)
-    let organizationId = req.body.organizationId;
-    if (!organizationId) {
-      // Criar uma nova organização se não for fornecida
+      // Criar nova organização baseada no nome fornecido
       const organization = await storage.createOrganization({
         name: req.body.organizationName || 'Minha Empresa'
       });
-      organizationId = organization.id;
+      
+      // Criar o usuário associado à organização
+      const user = await storage.createUser({
+        email: req.body.email,
+        name: req.body.name,
+        password: await hashPassword(req.body.password),
+        organizationId: organization.id
+      });
+
+      // Login automático após registro
+      req.login(user, (err) => {
+        if (err) return next(err);
+        // Retornar o usuário sem expor a senha
+        const { password, ...userWithoutPassword } = user;
+        res.status(201).json(userWithoutPassword);
+      });
+    } catch (error) {
+      console.error('Erro no registro:', error);
+      res.status(500).json({ message: "Erro ao criar conta" });
     }
-
-    const user = await storage.createUser({
-      ...req.body,
-      organizationId,
-      password: await hashPassword(req.body.password),
-    });
-
-    req.login(user, (err) => {
-      if (err) return next(err);
-      res.status(201).json(user);
-    });
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+    // Retornar o usuário sem expor a senha
+    const { password, ...userWithoutPassword } = req.user as SelectUser;
+    res.status(200).json(userWithoutPassword);
   });
 
   app.post("/api/logout", (req, res, next) => {
@@ -108,6 +121,8 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+    // Retornar o usuário sem expor a senha
+    const { password, ...userWithoutPassword } = req.user as SelectUser;
+    res.json(userWithoutPassword);
   });
 }

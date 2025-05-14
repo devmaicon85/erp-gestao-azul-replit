@@ -434,6 +434,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   password: true,
   organizationId: true,
+})
+.extend({
+  // Campo adicional para uso no frontend durante o registro
+  organizationName: z.string().optional(),
 });
 
 export const insertOrganizationSchema = createInsertSchema(organizations).pick({
