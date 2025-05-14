@@ -29,8 +29,14 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Usar um valor padrão para SESSION_SECRET se não estiver definido
+  if (!process.env.SESSION_SECRET) {
+    process.env.SESSION_SECRET = 'gestao-azul-secret-key';
+    console.warn('Aviso: SESSION_SECRET não definido, usando valor padrão para desenvolvimento');
+  }
+  
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
@@ -42,8 +48,11 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByUsername(username);
+    new LocalStrategy({
+      usernameField: 'email', // Especificar que o campo 'username' na requisição deve ser tratado como 'email'
+      passwordField: 'password'
+    }, async (email, password, done) => {
+      const user = await storage.getUserByEmail(email);
       if (!user || !(await comparePasswords(password, user.password))) {
         return done(null, false);
       } else {
@@ -59,13 +68,24 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
-    const existingUser = await storage.getUserByUsername(req.body.username);
+    const existingUser = await storage.getUserByEmail(req.body.email);
     if (existingUser) {
-      return res.status(400).send("Username already exists");
+      return res.status(400).send("Email already registered");
+    }
+
+    // Garantir que temos o ID da organização (pode vir da UI ou criamos uma nova)
+    let organizationId = req.body.organizationId;
+    if (!organizationId) {
+      // Criar uma nova organização se não for fornecida
+      const organization = await storage.createOrganization({
+        name: req.body.organizationName || 'Minha Empresa'
+      });
+      organizationId = organization.id;
     }
 
     const user = await storage.createUser({
       ...req.body,
+      organizationId,
       password: await hashPassword(req.body.password),
     });
 

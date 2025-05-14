@@ -48,11 +48,11 @@ export interface IStorage {
   updateOrder(id: string, order: Partial<Order>): Promise<Order | undefined>;
   deleteOrder(id: string, organizationId: string): Promise<boolean>;
   
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Store para sessões
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any;
   
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 
@@ -74,6 +74,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getUserByUsername(username: string): Promise<User | undefined> {
+    // No campo username em nossa tabela, usamos email como identificador
     const [user] = await db.select().from(users).where(eq(users.email, username));
     return user;
   }
