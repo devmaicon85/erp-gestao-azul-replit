@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Plus, X, Check } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { formatPhoneNumber, formatDocument, formatZipCode, fetchAddressByZipCode } from "@/lib/utils";
 
 const phoneSchema = z.object({
   number: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
@@ -74,6 +76,8 @@ interface ContactFormProps {
 
 export default function ContactForm({ contact, isOpen, onClose, onSuccess }: ContactFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -198,11 +202,65 @@ export default function ContactForm({ contact, isOpen, onClose, onSuccess }: Con
     if (checked) {
       // Set all other addresses to not primary
       const addresses = form.getValues("addresses");
-      addresses.forEach((address, i) => {
-        if (i !== index) {
-          form.setValue(`addresses.${i}.isPrimary`, false);
+      if (addresses) {
+        addresses.forEach((address, i) => {
+          if (i !== index) {
+            form.setValue(`addresses.${i}.isPrimary`, false);
+          }
+        });
+      }
+    }
+  };
+  
+  // Processa e formata o número de telefone
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const formattedPhone = formatPhoneNumber(e.target.value);
+    form.setValue(`phones.${index}.number`, formattedPhone);
+  };
+  
+  // Processa e formata o documento (CPF/CNPJ)
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedDocument = formatDocument(e.target.value);
+    form.setValue('document', formattedDocument);
+  };
+  
+  // Processa e formata o CEP
+  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const formattedZipCode = formatZipCode(e.target.value);
+    form.setValue(`addresses.${index}.zipCode`, formattedZipCode);
+  };
+  
+  // Busca endereço pelo CEP
+  const handleZipCodeBlur = async (e: React.FocusEvent<HTMLInputElement>, index: number) => {
+    const zipCode = e.target.value;
+    if (zipCode.length < 8) return;
+    
+    setIsLoadingCep(true);
+    try {
+      const addressData = await fetchAddressByZipCode(zipCode);
+      if (addressData) {
+        form.setValue(`addresses.${index}.street`, addressData.street || '');
+        form.setValue(`addresses.${index}.neighborhood`, addressData.neighborhood || '');
+        form.setValue(`addresses.${index}.city`, addressData.city || '');
+        form.setValue(`addresses.${index}.state`, addressData.state || '');
+        if (addressData.complement) {
+          form.setValue(`addresses.${index}.complement`, addressData.complement);
         }
+        
+        toast({
+          title: "CEP encontrado",
+          description: "Endereço preenchido automaticamente.",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao buscar CEP",
+        description: "Não foi possível encontrar o endereço.",
+        variant: "destructive",
       });
+    } finally {
+      setIsLoadingCep(false);
     }
   };
 

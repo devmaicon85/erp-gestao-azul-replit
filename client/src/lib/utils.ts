@@ -154,3 +154,41 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = setTimeout(later, wait);
   };
 }
+
+export function formatZipCode(zipCode: string): string {
+  if (!zipCode) return '';
+  
+  // Remove non-numeric characters
+  const numericOnly = zipCode.replace(/\D/g, '');
+  
+  // Format as #####-###
+  if (numericOnly.length === 8) {
+    return `${numericOnly.substring(0, 5)}-${numericOnly.substring(5)}`;
+  }
+  
+  return zipCode;
+}
+
+export async function fetchAddressByZipCode(zipCode: string) {
+  if (!zipCode || zipCode.length < 8) return null;
+  
+  const cepClean = zipCode.replace(/\D/g, '');
+  
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cepClean}/json/`);
+    const data = await response.json();
+    
+    if (data.erro) return null;
+    
+    return {
+      street: data.logradouro,
+      neighborhood: data.bairro,
+      city: data.localidade,
+      state: data.uf,
+      complement: data.complemento,
+    };
+  } catch (error) {
+    console.error('Erro ao buscar CEP:', error);
+    return null;
+  }
+}
