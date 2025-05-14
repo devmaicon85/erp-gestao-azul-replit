@@ -100,18 +100,16 @@ export class DatabaseStorage implements IStorage {
 
   // Contacts
   async getContacts(organizationId: string, type?: string, status: number = 1): Promise<Contact[]> {
-    let query = db.select().from(contacts).where(
-      and(
-        eq(contacts.organizationId, organizationId),
-        eq(contacts.status, status)
-      )
-    );
+    const conditions = [
+      eq(contacts.organizationId, organizationId),
+      eq(contacts.status, status)
+    ];
     
     if (type) {
-      query = query.where(eq(contacts.type, type as any));
+      conditions.push(eq(contacts.type, type as any));
     }
     
-    return await query;
+    return await db.select().from(contacts).where(and(...conditions));
   }
 
   async getContact(id: string, organizationId: string): Promise<Contact | undefined> {
@@ -220,13 +218,13 @@ export class DatabaseStorage implements IStorage {
 
   // Orders
   async getOrders(organizationId: string, status?: string): Promise<Order[]> {
-    let query = db.select().from(orders).where(eq(orders.organizationId, organizationId));
+    const conditions = [eq(orders.organizationId, organizationId)];
     
     if (status) {
-      query = query.where(eq(orders.status, status as any));
+      conditions.push(eq(orders.status, status as any));
     }
     
-    return await query;
+    return await db.select().from(orders).where(and(...conditions));
   }
 
   async getOrder(id: string, organizationId: string): Promise<Order | undefined> {
