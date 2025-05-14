@@ -14,10 +14,14 @@ type AuthContextType = {
   error: Error | null;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  registerMutation: UseMutationResult<SelectUser, Error, any>; // Usamos 'any' para aceitar organizationName
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
+// Definindo interface de login que corresponda ao que o backend espera
+type LoginData = {
+  email: string;
+  password: string;
+};
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -49,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
+    mutationFn: async (credentials: any) => { // Usamos 'any' aqui para aceitar a propriedade organizationName
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
@@ -58,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onError: (error: Error) => {
       toast({
-        title: "Registration failed",
+        title: "Falha no cadastro",
         description: error.message,
         variant: "destructive",
       });

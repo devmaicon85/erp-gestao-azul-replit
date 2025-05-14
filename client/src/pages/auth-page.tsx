@@ -63,7 +63,7 @@ export default function AuthPage() {
   const onLoginSubmit = async (data: LoginFormData) => {
     try {
       await loginMutation.mutateAsync({
-        username: data.email,
+        email: data.email,
         password: data.password,
       });
       toast({
@@ -80,10 +80,10 @@ export default function AuthPage() {
       // First create the organization, then register the user
       // This logic will be handled by the backend
       await registerMutation.mutateAsync({
-        username: data.email,
+        email: data.email,
         password: data.password,
         name: data.name,
-        organizationId: data.organizationName, // This will be converted on the backend
+        organizationName: data.organizationName, // Nome da organização que será criada
       });
       toast({
         title: "Cadastro realizado com sucesso",
