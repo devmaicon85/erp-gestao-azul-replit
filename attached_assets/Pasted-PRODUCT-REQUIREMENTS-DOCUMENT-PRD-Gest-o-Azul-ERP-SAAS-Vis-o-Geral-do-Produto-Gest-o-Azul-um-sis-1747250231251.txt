@@ -1,0 +1,333 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+Gestão Azul ERP SAAS
+Visão Geral do Produto
+Gestão Azul é um sistema ERP SAAS (Software as a Service) completo, totalmente responsivo e acessível em qualquer dispositivo (PC, tablet ou celular). O sistema é projetado para facilitar a gestão de negócios com funcionalidades de cadastro de contatos, produtos, pedidos e finanças.
+Identidade Visual
+
+Nome: Gestão Azul
+Cor predominante: Azul em diversas tonalidades
+
+Funcionalidades Principais
+1. Sistema de Usuários e Autenticação
+1.1 Cadastro de Novo Usuário
+
+Campos obrigatórios:
+
+Nome da Organização (que será o nome do tenant)
+Nome do usuário
+E-mail único
+Senha
+
+
+
+1.2 Login
+
+Opções de login:
+
+E-mail e senha
+Magic link
+Conta Google
+
+
+Comportamento: Ao autenticar o usuário, logar automaticamente na organização (tenant) correspondente
+
+2. Gestão de Contatos
+2.1 Cadastro e Edição de Contatos
+
+Tipos de contato:
+
+Cliente
+Fornecedor
+Colaborador (com opção adicional para definir como Entregador)
+Transportador
+Contato Geral
+
+
+Campos do cadastro:
+
+Nome* (único campo obrigatório)
+Tipo do Contato (seleção dos tipos acima)
+Documento (CPF/CNPJ)
+
+Com validação (não obrigatório)
+Formatação automática: CPF (###.###.###-##) ou CNPJ (##.###.###/####-##)
+
+
+Telefones (múltiplos)
+
+Formatação automática: (##) ####-#### (10 dígitos) ou (##) #####-#### (11 dígitos)
+Opção para definir telefone principal
+
+
+Endereços (múltiplos)
+
+Nome do Endereço (default: "Endereço 01")
+CEP (##.###-###) com busca automática
+Logradouro, Número, Complemento, Bairro, Cidade, UF e Referência
+Opção para definir endereço principal
+Layout responsivo: CEP, Endereço, Número e Complemento na mesma linha (telas grandes)
+Bairro, Cidade, UF e Referência na linha seguinte
+
+
+E-mail (com validação, não obrigatório)
+Data de Nascimento (formato dd/mm/yyyy, não obrigatório)
+Observação
+
+
+
+2.2 Listagem de Contatos
+
+Funcionalidades:
+
+Filtro por tipo de contato (abas)
+Campo de busca inteligente
+
+Busca fonética (encontra nomes com grafias similares)
+Busca em todos os campos (inclusive telefones e endereços)
+Ignora caracteres especiais para facilitar buscas
+
+
+URL persistente (mantém filtros ao recarregar)
+Layout responsivo em formato de cards/divs
+Exibição de informações principais:
+
+Nome, email (com ícone)
+Telefones (com ícone)
+Endereços (com link para Google Maps)
+
+
+Paginação com chamada à API (não carrega todos os dados de uma vez)
+Ordenação por contatos mais pesquisados
+Opções para editar e excluir contatos
+Exclusão lógica (status = 0) com opção de restaurar da "lixeira"
+Filtro específico "Excluídos" para visualizar itens na lixeira
+Exportação para Excel (XLS)
+Impressão de listagem
+
+
+
+3. Gestão de Produtos
+3.1 Cadastro e Edição de Produtos
+
+Campos:
+
+Código Interno* (obrigatório)
+Código de Barras
+Nome* (obrigatório)
+Tipo de Produto:
+
+Simples
+Vasilhame
+Com retorno de vasilhame
+
+
+Vasilhame associado (quando tipo = "com retorno de vasilhame")
+Valor de Custo (com formatação monetária)
+Tabelas de Preço:
+
+Tabela Padrão - Valor
+Tabelas adicionais - Valor
+
+
+Estoque Atual
+Estoque Mínimo
+Imagem do Produto
+
+
+
+3.2 Listagem de Produtos
+
+Funcionalidades:
+
+Busca por tipo, código interno, código de barras ou nome
+Busca fonética (palavras similares)
+Layout responsivo (divs)
+Exibição de:
+
+Código, Código de barras
+Nome
+Valor Padrão
+Valor de Custo
+Tipo
+Estoque mínimo
+Estoque atual
+
+
+Exportação para Excel
+Impressão de listagem
+
+
+
+4. Gestão de Pedidos
+4.1 Lançamento de Pedidos
+
+Informações gerais:
+
+Data do pedido (padrão: data atual do usuário, configurável por UTC)
+Seletor de data (date picker)
+
+
+Seleção de cliente:
+
+Busca por telefone (com formatação)
+Busca por nome ou endereço
+Exibição de múltiplos resultados com endereços
+Seleção de endereço para entrega
+Edição rápida de dados do cliente
+Adição de novo endereço
+
+
+Seleção de produtos:
+
+Busca por código interno, código de barras
+Busca por nome
+Exibição de múltiplos resultados
+Quantidade (padrão: 1)
+Preço unitário (baseado na tabela padrão)
+Opção para trocar tabela de preço
+Opção para editar o valor manualmente
+Memorização da tabela de preço para futuras compras do cliente
+
+
+Finalização do pedido:
+
+Lista de itens (com opções para editar/excluir)
+Taxa de entrega
+Forma(s) de pagamento
+
+Opção para múltiplas formas de pagamento
+Valor por forma de pagamento
+
+
+Entregador (seleção de colaboradores marcados como entregadores)
+Cálculo automático de troco
+
+
+
+4.2 Gestão de Pedidos
+
+Visualizações:
+
+Kanban (por status)
+Listagem
+
+
+Informações exibidas:
+
+Nome do cliente
+Telefone principal
+Endereço de entrega
+Itens, Quantidades e Valores
+Taxa de entrega
+Valor total
+Status do pedido
+Forma(s) de pagamento
+Opções para alterar/excluir
+
+
+Status de pedidos:
+
+Novos pedidos
+Entregando
+Entregue
+Concluídos
+Todos os pedidos
+Cancelados
+Em aberto
+
+
+Controle de entregas:
+
+Registro de hora de saída para entrega
+Registro de hora de entrega
+
+
+Busca e filtros:
+
+Por entregador
+Por data
+Por telefone do cliente
+Por endereço
+Por status
+
+
+
+5. Controle Financeiro
+5.1 Gestão de Formas de Pagamento
+
+Cadastro e edição de formas de pagamento
+Configuração de tipo "A receber"
+Definição de prazo de vencimento (em dias)
+
+5.2 Contas a Receber
+
+Geração automática:
+
+A partir de pedidos com forma de pagamento do tipo "A receber"
+Data de vencimento calculada (data atual + prazo configurado)
+Possibilidade de personalizar o vencimento
+
+
+Recebimentos:
+
+Registro de pagamentos parciais (múltiplos pagamentos)
+Data de pagamento
+Valor recebido
+
+
+Filtros e busca:
+
+Por cliente (com busca por nome, endereço ou telefone)
+Por período (entre duas datas)
+Por status (recebidas, em aberto, vencidas)
+
+
+Exportação:
+
+Para Excel
+Impressão
+
+
+
+5.3 Controle de Caixa
+
+Abertura de caixa
+Registro de movimentações:
+
+Vendas
+Recebimentos
+Trocos
+Sangrias
+
+
+Fechamento de caixa com relatório
+
+Requisitos Técnicos
+1. Interface e Usabilidade
+
+Design totalmente responsivo (PC, tablet e celular)
+Interface predominantemente azul
+Uso de modais profissionais para confirmações (sem alerts nativos)
+Validação de campos em tempo real
+
+2. Performance
+
+Otimização para grandes volumes de dados (dezenas de milhares de registros)
+Paginação e carregamento sob demanda
+Busca dinâmica com chamadas à API
+
+3. Persistência de Dados
+
+Sistema multi-tenant (separação por organização)
+Exclusão lógica de registros (status = 0)
+Sistema de recuperação de registros excluídos
+
+4. Exportação e Impressão
+
+Exportação para Excel (XLS)
+Geração de relatórios para impressão em todas as áreas principais
+
+5. Configurações
+
+Personalização de fuso horário (UTC)
+Configurações por usuário/tenant

@@ -1,0 +1,458 @@
+// This is your Prisma schema file for Gestão Azul ERP SAAS
+// Prisma supports multiple databases, for this schema we're assuming PostgreSQL
+// Learn more about Prisma here: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Multi-tenant model
+model Organization {
+  id            String   @id @default(uuid())
+  name          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  users         User[]
+  contacts      Contact[]
+  products      Product[]
+  orders        Order[]
+  paymentMethods PaymentMethod[]
+  receivables   Receivable[]
+  cashRegisters CashRegister[]
+  priceTables   PriceTable[]
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String
+  password      String?  // Nullable for OAuth users
+  timezone      String   @default("America/Sao_Paulo")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  organizationId String
+  
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  cashRegisters CashRegister[]
+  deliveries    Delivery[]
+  cashMovements CashMovement[]
+  
+  @@index([email])
+  @@index([organizationId])
+}
+
+// Contact Types enum
+enum ContactType {
+  CLIENT
+  SUPPLIER
+  EMPLOYEE
+  CARRIER
+  CONTACT
+}
+
+model Contact {
+  id            String      @id @default(uuid())
+  name          String
+  type          ContactType
+  document      String?     // CPF/CNPJ
+  email         String?
+  birthDate     DateTime?
+  observation   String?
+  isDeliveryPerson Boolean  @default(false)
+  status        Int         @default(1) // 1 = active, 0 = deleted
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  // Foreign keys
+  organizationId String
+  
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  phones        Phone[]
+  addresses     Address[]
+  asClient      Order[]
+  deliveries    Delivery[]
+  receivables   Receivable[]
+  
+  @@index([organizationId])
+  @@index([type])
+  @@index([name])
+  @@index([document])
+  @@index([status])
+}
+
+model Phone {
+  id            String   @id @default(uuid())
+  number        String
+  isPrimary     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  contactId     String
+  
+  // Relations
+  contact       Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  
+  @@index([contactId])
+  @@index([number])
+}
+
+model Address {
+  id            String   @id @default(uuid())
+  name          String   @default("Endereço 01")
+  zipCode       String?
+  street        String
+  number        String?
+  complement    String?
+  neighborhood  String?
+  city          String?
+  state         String?
+  reference     String?
+  isPrimary     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  contactId     String
+  
+  // Relations
+  contact       Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  deliveryAddress Order[]
+  
+  @@index([contactId])
+  @@index([city])
+  @@index([state])
+}
+
+// Product Types enum
+enum ProductType {
+  SIMPLE
+  CONTAINER
+  WITH_CONTAINER_RETURN
+}
+
+model Product {
+  id                String      @id @default(uuid())
+  internalCode      String
+  barCode           String?
+  name              String
+  type              ProductType @default(SIMPLE)
+  costValue         Decimal     @default(0) @db.Decimal(10, 2)
+  currentStock      Int         @default(0)
+  minimumStock      Int         @default(0)
+  imageUrl          String?
+  status            Int         @default(1) // 1 = active, 0 = deleted
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  // Foreign keys
+  organizationId    String
+  containerProductId String?    // Reference to container product if type is WITH_CONTAINER_RETURN
+  
+  // Relations
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  containerProduct  Product?     @relation("ProductToContainer", fields: [containerProductId], references: [id])
+  productsWithContainer Product[] @relation("ProductToContainer")
+  priceItems        PriceItem[]
+  orderItems        OrderItem[]
+  
+  @@unique([organizationId, internalCode])
+  @@index([organizationId])
+  @@index([barCode])
+  @@index([name])
+  @@index([type])
+  @@index([status])
+}
+
+model PriceTable {
+  id            String   @id @default(uuid())
+  name          String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  organizationId String
+  
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  priceItems    PriceItem[]
+  orders        Order[]
+  
+  @@index([organizationId])
+}
+
+model PriceItem {
+  id            String   @id @default(uuid())
+  price         Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  priceTableId  String
+  productId     String
+  
+  // Relations
+  priceTable    PriceTable @relation(fields: [priceTableId], references: [id], onDelete: Cascade)
+  product       Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([priceTableId, productId])
+  @@index([priceTableId])
+  @@index([productId])
+}
+
+// Order Status enum
+enum OrderStatus {
+  NEW
+  DELIVERING
+  DELIVERED
+  COMPLETED
+  CANCELED
+  OPEN
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  orderDate     DateTime    @default(now())
+  status        OrderStatus @default(NEW)
+  deliveryFee   Decimal     @default(0) @db.Decimal(10, 2)
+  totalValue    Decimal     @db.Decimal(10, 2)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  // Foreign keys
+  organizationId String
+  clientId      String
+  addressId     String
+  priceTableId  String?
+  
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  client        Contact     @relation(fields: [clientId], references: [id])
+  address       Address     @relation(fields: [addressId], references: [id])
+  priceTable    PriceTable? @relation(fields: [priceTableId], references: [id])
+  items         OrderItem[]
+  payments      OrderPayment[]
+  delivery      Delivery?
+  receivables   Receivable[]
+  
+  @@index([organizationId])
+  @@index([clientId])
+  @@index([orderDate])
+  @@index([status])
+}
+
+model OrderItem {
+  id            String   @id @default(uuid())
+  quantity      Int
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  totalPrice    Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  orderId       String
+  productId     String
+  
+  // Relations
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [productId], references: [id])
+  
+  @@index([orderId])
+  @@index([productId])
+}
+
+enum PaymentMethodType {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  TRANSFER
+  CHECK
+  RECEIVABLE
+  OTHER
+}
+
+model PaymentMethod {
+  id            String           @id @default(uuid())
+  name          String
+  type          PaymentMethodType
+  dueDays       Int              @default(0) // Used for RECEIVABLE type
+  active        Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  // Foreign keys
+  organizationId String
+  
+  // Relations
+  organization  Organization     @relation(fields: [organizationId], references: [id])
+  orderPayments OrderPayment[]
+  cashMovements CashMovement[]
+  
+  @@index([organizationId])
+  @@index([type])
+}
+
+model OrderPayment {
+  id            String   @id @default(uuid())
+  value         Decimal  @db.Decimal(10, 2)
+  change        Decimal  @default(0) @db.Decimal(10, 2) // Troco
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  orderId       String
+  paymentMethodId String
+  
+  // Relations
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  
+  @@index([orderId])
+  @@index([paymentMethodId])
+}
+
+model Delivery {
+  id                String    @id @default(uuid())
+  departureDateTime DateTime?
+  deliveryDateTime  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Foreign keys
+  orderId           String    @unique
+  deliveryPersonId  String?
+  assignedById      String
+  
+  // Relations
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryPerson    Contact?  @relation(fields: [deliveryPersonId], references: [id])
+  assignedBy        User      @relation(fields: [assignedById], references: [id])
+  
+  @@index([orderId])
+  @@index([deliveryPersonId])
+}
+
+enum ReceivableStatus {
+  OPEN
+  PARTIAL_RECEIVED
+  RECEIVED
+  OVERDUE
+}
+
+model Receivable {
+  id            String           @id @default(uuid())
+  dueDate       DateTime
+  totalValue    Decimal          @db.Decimal(10, 2)
+  receivedValue Decimal          @default(0) @db.Decimal(10, 2)
+  status        ReceivableStatus @default(OPEN)
+  description   String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  // Foreign keys
+  organizationId String
+  clientId      String
+  orderId       String?
+  
+  // Relations
+  organization  Organization     @relation(fields: [organizationId], references: [id])
+  client        Contact          @relation(fields: [clientId], references: [id])
+  order         Order?           @relation(fields: [orderId], references: [id])
+  payments      ReceivablePayment[]
+  
+  @@index([organizationId])
+  @@index([clientId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+model ReceivablePayment {
+  id            String   @id @default(uuid())
+  paymentDate   DateTime
+  value         Decimal  @db.Decimal(10, 2)
+  observation   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  receivableId  String
+  cashRegisterId String?
+  
+  // Relations
+  receivable    Receivable @relation(fields: [receivableId], references: [id], onDelete: Cascade)
+  cashRegister  CashRegister? @relation(fields: [cashRegisterId], references: [id])
+  
+  @@index([receivableId])
+  @@index([paymentDate])
+}
+
+model CashRegister {
+  id            String   @id @default(uuid())
+  openingDate   DateTime @default(now())
+  closingDate   DateTime?
+  initialAmount Decimal  @default(0) @db.Decimal(10, 2)
+  finalAmount   Decimal? @db.Decimal(10, 2)
+  status        String   @default("OPEN") // OPEN, CLOSED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Foreign keys
+  organizationId String
+  userId        String
+  
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
+  movements     CashMovement[]
+  receivablePayments ReceivablePayment[]
+  
+  @@index([organizationId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum CashMovementType {
+  SALE
+  RECEIVABLE_PAYMENT
+  WITHDRAWAL // Sangria
+  DEPOSIT
+  ADJUSTMENT
+}
+
+model CashMovement {
+  id            String          @id @default(uuid())
+  type          CashMovementType
+  description   String
+  value         Decimal         @db.Decimal(10, 2)
+  movementDate  DateTime        @default(now())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  // Foreign keys
+  cashRegisterId String
+  paymentMethodId String?
+  userId        String
+  
+  // Relations
+  cashRegister  CashRegister   @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
+  
+  @@index([cashRegisterId])
+  @@index([type])
+  @@index([movementDate])
+}

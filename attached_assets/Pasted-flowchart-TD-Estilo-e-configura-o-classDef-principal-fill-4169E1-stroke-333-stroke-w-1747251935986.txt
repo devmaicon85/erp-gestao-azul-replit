@@ -1,0 +1,266 @@
+flowchart TD
+    %% Estilo e configuração
+    classDef principal fill:#4169E1,stroke:#333,stroke-width:1px,color:white
+    classDef secundario fill:#6495ED,stroke:#333,stroke-width:1px,color:white
+    classDef terciario fill:#87CEFA,stroke:#333,stroke-width:1px,color:black
+    classDef caminho fill:#fff,stroke:#333,stroke-width:1px,color:black
+    
+    %% Início - Login e Cadastro
+    A[Início] --> B{Tem conta?}
+    B -->|Não| C[Cadastro Novo]
+    B -->|Sim| D[Login]
+    
+    %% Fluxo de Cadastro
+    C --> C1[Informar Nome da Organização]
+    C1 --> C2[Informar Nome do Usuário]
+    C2 --> C3[Informar E-mail único]
+    C3 --> C4[Informar Senha]
+    C4 --> C5[Confirmação de Cadastro]
+    C5 --> E
+    
+    %% Fluxo de Login
+    D --> D1{Método de Login}
+    D1 -->|E-mail e Senha| D2[Digitar Credenciais]
+    D1 -->|Magic Link| D3[Informar E-mail]
+    D1 -->|Google| D4[Autenticação Google]
+    D2 --> D5[Validação]
+    D3 --> D6[E-mail com Link]
+    D4 --> D7[OAuth Google]
+    D5 --> E
+    D6 --> E
+    D7 --> E
+    
+    %% Dashboard Principal
+    E[Dashboard] --> F[Menu Principal]
+    E:::principal
+    
+    %% Menu Principal
+    F --> G[Contatos]
+    F --> H[Produtos]
+    F --> I[Pedidos]
+    F --> J[Financeiro]
+    F --> K[Configurações]
+    F:::principal
+    
+    %% Fluxo de Contatos
+    G --> G1[Listagem de Contatos]
+    G1 --> G2{Filtrar por Tipo?}
+    G2 -->|Sim| G3[Selecionar Tipo]
+    G3 --> G4
+    G2 -->|Não| G4[Ver Todos]
+    G4 --> G5{Ação}
+    G5 -->|Buscar| G6[Busca Inteligente]
+    G6 --> G4
+    G5 -->|Novo| G7[Form Novo Contato]
+    G5 -->|Editar| G8[Form Editar Contato]
+    G5 -->|Excluir| G9{Confirmar Exclusão}
+    G9 -->|Sim| G10[Exclusão Lógica]
+    G9 -->|Não| G4
+    G10 --> G4
+    G5 -->|Ver Excluídos| G11[Listar Excluídos]
+    G11 --> G12{Restaurar?}
+    G12 -->|Sim| G13[Restaurar Contato]
+    G12 -->|Não| G4
+    G13 --> G4
+    G5 -->|Exportar| G14[Exportar Excel]
+    G5 -->|Imprimir| G15[Gerar Relatório]
+    G:::secundario
+    
+    %% Form Contato - Detalhes
+    G7 --> G7A[Informar Dados Básicos]
+    G7A --> G7B[Adicionar Telefones]
+    G7B --> G7C[Adicionar Endereços]
+    G7C --> G7D{Salvar}
+    G7D -->|Sim| G7E[Validação e Salvar]
+    G7D -->|Não| G4
+    G7E --> G4
+    
+    G8 --> G8A[Editar Dados Básicos]
+    G8A --> G8B[Editar Telefones]
+    G8B --> G8C[Editar Endereços]
+    G8C --> G8D{Salvar}
+    G8D -->|Sim| G8E[Validação e Salvar]
+    G8D -->|Não| G4
+    G8E --> G4
+    
+    %% Fluxo de Produtos
+    H --> H1[Listagem de Produtos]
+    H1 --> H2{Ação}
+    H2 -->|Buscar| H3[Busca por Código/Nome]
+    H3 --> H1
+    H2 -->|Novo| H4[Form Novo Produto]
+    H2 -->|Editar| H5[Form Editar Produto]
+    H2 -->|Excluir| H6{Confirmar Exclusão}
+    H6 -->|Sim| H7[Exclusão Lógica]
+    H6 -->|Não| H1
+    H7 --> H1
+    H2 -->|Exportar| H8[Exportar Excel]
+    H2 -->|Imprimir| H9[Gerar Relatório]
+    H:::secundario
+    
+    %% Form Produto - Detalhes
+    H4 --> H4A[Informar Dados Básicos]
+    H4A --> H4B[Definir Tipo]
+    H4B -->|Com Vasilhame| H4C[Selecionar Vasilhame]
+    H4B -->|Simples/Vasilhame| H4D[Definir Valores]
+    H4C --> H4D
+    H4D --> H4E[Definir Estoque]
+    H4E --> H4F{Salvar}
+    H4F -->|Sim| H4G[Validação e Salvar]
+    H4F -->|Não| H1
+    H4G --> H1
+    
+    H5 --> H5A[Editar Dados Básicos]
+    H5A --> H5B[Editar Tipo]
+    H5B -->|Com Vasilhame| H5C[Editar Vasilhame]
+    H5B -->|Simples/Vasilhame| H5D[Editar Valores]
+    H5C --> H5D
+    H5D --> H5E[Editar Estoque]
+    H5E --> H5F{Salvar}
+    H5F -->|Sim| H5G[Validação e Salvar]
+    H5F -->|Não| H1
+    H5G --> H1
+    
+    %% Fluxo de Pedidos
+    I --> I1[Gestão de Pedidos]
+    I1 --> I2{Visualização}
+    I2 -->|Kanban| I3[Visualização Kanban]
+    I2 -->|Lista| I4[Visualização Lista]
+    I3 --> I5{Ação}
+    I4 --> I5
+    I5 -->|Novo| I6[Criar Novo Pedido]
+    I5 -->|Editar| I7[Editar Pedido Existente]
+    I5 -->|Filtrar| I8[Filtrar por Parâmetros]
+    I5 -->|Mudar Status| I9[Atualizar Status Pedido]
+    I5 -->|Ver Detalhes| I10[Detalhes do Pedido]
+    I:::secundario
+    
+    %% Fluxo Novo Pedido - Detalhes
+    I6 --> I6A[Seleção de Data]
+    I6A --> I6B[Busca Cliente]
+    I6B -->|Pelo Telefone| I6C[Localizar por Telefone]
+    I6B -->|Pelo Nome| I6D[Localizar por Nome]
+    I6C --> I6E{Cliente Encontrado?}
+    I6D --> I6E
+    I6E -->|Não| I6F[Criar Novo Cliente]
+    I6E -->|Sim| I6G[Selecionar Cliente]
+    I6F --> I6G
+    I6G --> I6H[Selecionar Endereço]
+    I6H -->|Novo Endereço| I6I[Adicionar Endereço]
+    I6H -->|Endereço Existente| I6J[Adicionar Produtos]
+    I6I --> I6J
+    I6J -->|Busca Produto| I6K[Localizar Produto]
+    I6K --> I6L[Definir Quantidade]
+    I6L --> I6M[Definir Preço]
+    I6M --> I6N{Mais Produtos?}
+    I6N -->|Sim| I6J
+    I6N -->|Não| I6O[Definir Taxa Entrega]
+    I6O --> I6P[Selecionar Forma Pagamento]
+    I6P -->|À Vista| I6Q[Informar Valores]
+    I6P -->|A Receber| I6R[Definir Vencimento]
+    I6Q --> I6S[Calcular Troco]
+    I6R --> I6T[Definir Entregador]
+    I6S --> I6T
+    I6T --> I6U{Finalizar Pedido}
+    I6U -->|Sim| I6V[Salvar Pedido]
+    I6U -->|Não| I1
+    I6V --> I1
+    
+    %% Fluxo Financeiro
+    J --> J1{Submenu Financeiro}
+    J1 -->|Formas Pagamento| J2[Gestão Formas Pagamento]
+    J1 -->|Contas a Receber| J3[Gestão Contas a Receber]
+    J1 -->|Controle de Caixa| J4[Gestão de Caixa]
+    J:::secundario
+    
+    %% Formas de Pagamento - Detalhes
+    J2 --> J2A[Listar Formas Pagamento]
+    J2A --> J2B{Ação}
+    J2B -->|Nova| J2C[Criar Forma Pagamento]
+    J2B -->|Editar| J2D[Editar Forma Pagamento]
+    J2B -->|Desativar| J2E[Desativar Forma Pagamento]
+    J2C --> J2F[Definir Nome]
+    J2C --> J2G[Definir Tipo]
+    J2C -->|Tipo A Receber| J2H[Definir Prazo]
+    J2G --> J2I{Salvar}
+    J2H --> J2I
+    J2I -->|Sim| J2J[Salvar Forma Pagamento]
+    J2I -->|Não| J2A
+    J2J --> J2A
+    
+    %% Contas a Receber - Detalhes
+    J3 --> J3A[Listar Contas a Receber]
+    J3A --> J3B{Filtrar}
+    J3B -->|Por Cliente| J3C[Buscar Cliente]
+    J3B -->|Por Período| J3D[Definir Período]
+    J3B -->|Por Status| J3E[Selecionar Status]
+    J3C --> J3F[Exibir Filtradas]
+    J3D --> J3F
+    J3E --> J3F
+    J3F --> J3G{Ação}
+    J3G -->|Nova| J3H[Nova Conta a Receber]
+    J3G -->|Registrar Pagamento| J3I[Pagamento Total/Parcial]
+    J3G -->|Exportar| J3J[Exportar Excel]
+    J3G -->|Imprimir| J3K[Gerar Relatório]
+    
+    %% Controle de Caixa - Detalhes
+    J4 --> J4A{Status Caixa}
+    J4A -->|Fechado| J4B[Abrir Caixa]
+    J4A -->|Aberto| J4C[Ver Movimentações]
+    J4B --> J4D[Informar Valor Inicial]
+    J4D --> J4E[Confirmar Abertura]
+    J4E --> J4C
+    J4C --> J4F{Ação}
+    J4F -->|Registrar Movimento| J4G[Novo Movimento]
+    J4F -->|Sangria| J4H[Realizar Sangria]
+    J4F -->|Fechar Caixa| J4I[Finalizar Caixa]
+    J4G --> J4J[Definir Tipo]
+    J4G --> J4K[Informar Valor]
+    J4G --> J4L[Informar Descrição]
+    J4G --> J4M{Confirmar}
+    J4M -->|Sim| J4N[Salvar Movimento]
+    J4M -->|Não| J4C
+    J4N --> J4C
+    J4H --> J4O[Informar Valor]
+    J4H --> J4P[Informar Motivo]
+    J4H --> J4Q{Confirmar}
+    J4Q -->|Sim| J4R[Registrar Sangria]
+    J4Q -->|Não| J4C
+    J4R --> J4C
+    J4I --> J4S[Conferir Valores]
+    J4I --> J4T[Informar Valor Final]
+    J4I --> J4U{Confirmar}
+    J4U -->|Sim| J4V[Gerar Relatório Fechamento]
+    J4U -->|Não| J4C
+    J4V --> J4A
+    
+    %% Configurações
+    K --> K1{Tipo Configuração}
+    K1 -->|Perfil| K2[Editar Perfil]
+    K1 -->|Organização| K3[Configurações Organização]
+    K1 -->|Sistema| K4[Configurações Sistema]
+    K:::secundario
+    
+    %% Perfil - Detalhes
+    K2 --> K2A[Editar Dados Pessoais]
+    K2A --> K2B[Alterar Senha]
+    K2B --> K2C[Definir Timezone]
+    K2C --> K2D{Salvar}
+    K2D -->|Sim| K2E[Salvar Perfil]
+    K2D -->|Não| K
+    K2E --> K
+    
+    %% Organização - Detalhes
+    K3 --> K3A[Editar Nome]
+    K3A --> K3B[Definir Configurações]
+    K3B --> K3C{Salvar}
+    K3C -->|Sim| K3D[Salvar Organização]
+    K3C -->|Não| K
+    K3D --> K
+
+    %% Relações entre os fluxos principais
+    G7 -.-> I6F
+    G8 -.-> I6I
+    I6K -.-> H4
+    J3H -.-> I6R
+    J4G -.-> J3I
