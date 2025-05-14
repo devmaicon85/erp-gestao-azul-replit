@@ -453,6 +453,14 @@ export const insertContactSchema = createInsertSchema(contacts).pick({
   observation: true,
   isDeliveryPerson: true,
   organizationId: true,
+}).extend({
+  // Tornando apenas o nome obrigatório
+  type: z.enum(['CLIENT', 'SUPPLIER', 'EMPLOYEE', 'CARRIER', 'CONTACT']).optional().default('CLIENT'),
+  document: z.string().optional(),
+  email: z.string().email().optional(),
+  birthDate: z.date().optional().nullable(),
+  observation: z.string().optional(),
+  isDeliveryPerson: z.boolean().optional().default(false),
 });
 
 export const insertProductSchema = createInsertSchema(products).pick({
